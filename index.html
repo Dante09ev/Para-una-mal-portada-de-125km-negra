@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Para la moto del vago</title>
+<style>
+body{font-family:Arial, sans-serif;background:#0f0f0f;color:#fff;text-align:center;margin:0}
+header{background:#ff6600;padding:25px;font-size:32px;font-weight:bold}
+.container{max-width:1000px;margin:auto;padding:20px}
+form{background:#1b1b1b;padding:20px;border-radius:12px;margin-bottom:30px}
+input,textarea{width:100%;padding:12px;margin:8px 0;border:none;border-radius:6px}
+button{background:#ff6600;color:white;border:none;padding:14px 22px;border-radius:8px;font-size:16px;cursor:pointer}
+button:hover{background:#ff8533}
+
+.stats{display:flex;justify-content:center;gap:40px;margin:25px 0;font-size:20px}
+.stat{background:#1b1b1b;padding:15px 25px;border-radius:10px}
+
+.mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px;margin-top:20px}
+.card{background:#1e1e1e;padding:15px;border-radius:12px;text-align:left;box-shadow:0 0 10px rgba(0,0,0,0.4)}
+.amount{color:#00ff99;font-weight:bold;font-size:18px}
+
+.ranking{margin-top:40px}
+.rank-card{background:#1b1b1b;margin:8px auto;padding:10px;border-radius:8px;max-width:400px}
+
+.payment{background:#1b1b1b;padding:20px;border-radius:12px;margin-bottom:30px}
+.qr{font-size:14px;color:#aaa;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>🏍️ Para la moto del vago</header>
+
+<div class="container">
+
+<div class="stats">
+<div class="stat">💰 Total recaudado: <span id="total">0</span> COP</div>
+<div class="stat">👥 Donantes: <span id="count">0</span></div>
+</div>
+
+<div class="payment">
+<h2>Cómo donar</h2>
+<p>Puedes enviar dinero por:</p>
+<p><b>Nequi / Daviplata</b></p>
+<p>Número: <b>3000000000</b></p>
+<p class="qr">(Aquí puedes poner un QR de pago si quieres)</p>
+</div>
+
+<h2>Registrar tu donación</h2>
+
+<form id="donationForm">
+<input type="text" id="name" placeholder="Tu nombre" required>
+<input type="number" id="amount" placeholder="Monto en COP (mínimo 1000)" min="1000" required>
+<textarea id="message" placeholder="Mensaje para el vago" required></textarea>
+<button type="submit">Registrar donación</button>
+</form>
+
+<h2>Mural de donantes</h2>
+<div class="mural" id="mural"></div>
+
+<div class="ranking">
+<h2>🏆 Top donadores</h2>
+<div id="ranking"></div>
+</div>
+
+</div>
+
+<script>
+const form = document.getElementById('donationForm');
+const mural = document.getElementById('mural');
+const totalEl = document.getElementById('total');
+const countEl = document.getElementById('count');
+const rankingEl = document.getElementById('ranking');
+
+let donations = JSON.parse(localStorage.getItem('donations')) || [];
+
+function render(){
+ mural.innerHTML = '';
+
+ donations.slice().reverse().forEach(d => {
+  const card = document.createElement('div');
+  card.className='card';
+  card.innerHTML = `<div class="amount">$${d.amount} COP</div><div><b>${d.name}</b></div><div>${d.message}</div>`;
+  mural.appendChild(card);
+ });
+
+ const total = donations.reduce((sum,d)=>sum+Number(d.amount),0);
+ totalEl.textContent = total.toLocaleString();
+ countEl.textContent = donations.length;
+
+ renderRanking();
+}
+
+function renderRanking(){
+ const totals = {};
+
+ donations.forEach(d=>{
+  if(!totals[d.name]) totals[d.name]=0;
+  totals[d.name]+=Number(d.amount);
+ });
+
+ const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+ rankingEl.innerHTML='';
+
+ sorted.forEach((r,i)=>{
+  const div=document.createElement('div');
+  div.className='rank-card';
+  div.innerHTML=`${i+1}. <b>${r[0]}</b> — $${r[1].toLocaleString()} COP`;
+  rankingEl.appendChild(div);
+ });
+}
+
+form.addEventListener('submit', e =>{
+ e.preventDefault();
+
+ const name = document.getElementById('name').value;
+ const amount = document.getElementById('amount').value;
+ const message = document.getElementById('message').value;
+
+ if(amount < 1000){
+  alert('La donación mínima es de $1.000 COP');
+  return;
+ }
+
+ donations.push({name,amount,message});
+
+ localStorage.setItem('donations', JSON.stringify(donations));
+
+ form.reset();
+ render();
+});
+
+render();
+</script>
+
+</body>
+</html>
